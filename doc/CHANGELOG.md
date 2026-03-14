@@ -43,4 +43,5 @@
 - feat(ui): changed auth success navigation from `/dashboard` to `/profile` to target a real protected route.
 - test(e2e): upgraded auth flow spec to execute real signup, signout, and login journey with session guard assertions.
 - chore(test): executed Playwright auth validation against local Supabase env to bypass hosted signup rate-limit throttling.
+- docs(readme): added detailed GitHub onboarding guide with architecture, environment setup, Supabase migration workflows, and run/test instructions.
 

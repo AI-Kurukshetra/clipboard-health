@@ -254,3 +254,11 @@ Legend: `[ ]` todo, `[~]` in-progress, `[x]` done, `[!]` blocked
 - Agent responsible: agent-browser / tester
 - Dependencies: T12.1
 
+## Phase 13 - Repository Onboarding Docs
+
+### [x] T13.1 Add comprehensive repository README (2026-03-14 14:32)
+- Description: Create detailed onboarding documentation covering project overview, architecture, setup (hosted/local Supabase), migrations, run/test commands, and security guidance.
+- Files affected: `README.md`
+- Agent responsible: coordinator
+- Dependencies: T12.2
+

@@ -12,4 +12,5 @@
 - Hosted migration deployment will use Supabase CLI (`supabase link` + `supabase db push`) against project ref `ccyfoscnarbjlnbbskbn`; execution is gated on CLI auth (`SUPABASE_ACCESS_TOKEN` or `supabase login`).
 - Hosted schema source-of-truth is now synchronized: all migrations through `20260314113800_reviews_schema.sql` are applied on project `ccyfoscnarbjlnbbskbn`.
 - Playwright signup/login verification will run against local Supabase when hosted auth returns `email rate limit exceeded`; this keeps auth E2E deterministic while preserving hosted schema sync for deployment.
+- Project onboarding standard is codified in `README.md` with dual setup modes (hosted Supabase for deployment parity, local Supabase for deterministic E2E/auth validation).
 

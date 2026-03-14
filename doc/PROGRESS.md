@@ -307,3 +307,13 @@
   Findings: no blocking issues; auth-flow spec now validates full worker signup and re-login lifecycle.
   Next handoff to: coordinator - finalize doc updates and status summary
 
+[2026-03-14 14:32] coordinator - Added comprehensive project README for GitHub onboarding
+  Output files:
+    + README.md
+    + doc/TASKS.md
+    + doc/PROGRESS.md
+    + doc/CHANGELOG.md
+    + doc/DECISIONS.md
+  Checks passed: corepack pnpm lint PASS  corepack pnpm typecheck PASS
+  Next handoff to: human - review README and publish
+
