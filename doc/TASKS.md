@@ -262,3 +262,43 @@ Legend: `[ ]` todo, `[~]` in-progress, `[x]` done, `[!]` blocked
 - Agent responsible: coordinator
 - Dependencies: T12.2
 
+## Phase 14 - MVP Polish: Profile Completion Flow
+
+### [x] T14.1 Add authenticated role-read endpoint for UI routing (2026-03-14 16:12)
+- Description: Implement `GET /api/auth/me` to resolve current user role from `user_roles` with metadata fallback.
+- Files affected: `app/api/auth/me/route.ts`
+- Agent responsible: api-endpoint (backend)
+- Dependencies: T13.1
+
+### [x] T14.2 Redirect after successful profile save by user role (2026-03-14 16:14)
+- Description: After profile mutation success, redirect worker/admin users to next-step pages (`/shifts` for workers, `/applications` for facility/admin).
+- Files affected: `components/profile/worker-profile-form.tsx`, `components/profile/facility-profile-form.tsx`
+- Agent responsible: frontend-design (frontend)
+- Dependencies: T14.1
+
+### [x] T14.3 Validate role-based profile completion journeys (2026-03-14 16:17)
+- Description: Add and execute E2E coverage for worker and facility-admin post-profile-save redirects.
+- Files affected: `tests/e2e/auth-flow.spec.ts`
+- Agent responsible: agent-browser / tester
+- Dependencies: T14.2
+
+## Phase 15 - Demo Data and Full Workflow Validation
+
+### [x] T15.1 Add idempotent hosted demo dataset seeder (2026-03-14 16:35)
+- Description: Add script to create reusable demo users and coherent records across all implemented MVP tables in hosted Supabase.
+- Files affected: `scripts/seed-demo-data.mjs`, `package.json`
+- Agent responsible: backend/coordinator
+- Dependencies: T14.3
+
+### [x] T15.2 Add demo handoff guide for credentials and seeded entities (2026-03-14 16:37)
+- Description: Create markdown guide with demo users, seeded IDs, walkthrough steps, and reseed command.
+- Files affected: `DEMO_DATA.md`
+- Agent responsible: coordinator
+- Dependencies: T15.1
+
+### [x] T15.3 Validate full module readiness via seeded E2E smoke (2026-03-14 16:45)
+- Description: Add and execute E2E smoke journey across shifts, applications, assignments, messages, timesheets, and reviews using seeded users.
+- Files affected: `tests/e2e/demo-dataset-smoke.spec.ts`, `lib/supabase/client.ts`
+- Agent responsible: agent-browser / tester / frontend
+- Dependencies: T15.2
+

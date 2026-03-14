@@ -44,4 +44,11 @@
 - test(e2e): upgraded auth flow spec to execute real signup, signout, and login journey with session guard assertions.
 - chore(test): executed Playwright auth validation against local Supabase env to bypass hosted signup rate-limit throttling.
 - docs(readme): added detailed GitHub onboarding guide with architecture, environment setup, Supabase migration workflows, and run/test instructions.
+- feat(api): added `GET /api/auth/me` to return authenticated user role via `user_roles` with metadata fallback.
+- feat(ui): profile save actions now redirect by role (`healthcare_worker` -> `/shifts`, `facility_admin/admin` -> `/applications`).
+- test(e2e): expanded auth flow to verify worker and facility-admin post-profile-save redirects end-to-end.
+- feat(data): added idempotent hosted demo seeding script creating linked records across user, profile, shift, application, assignment, messaging, timesheet, and review tables.
+- docs(demo): added `DEMO_DATA.md` with demo credentials, fixed entity IDs, and guided walkthrough steps.
+- fix(ui): updated browser Supabase client env handling to use Next.js-safe `NEXT_PUBLIC_*` access in client runtime.
+- test(e2e): added seeded dataset module smoke spec and validated full E2E suite (7/7).
 

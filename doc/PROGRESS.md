@@ -317,3 +317,50 @@
   Checks passed: corepack pnpm lint PASS  corepack pnpm typecheck PASS
   Next handoff to: human - review README and publish
 
+[2026-03-14 16:12] api-endpoint - Completed T14.1 role-read endpoint
+  Output files:
+    + app/api/auth/me/route.ts
+  Checks passed: corepack pnpm lint PASS  corepack pnpm typecheck PASS
+  Next handoff to: frontend-design - wire role-based redirect after profile save
+
+[2026-03-14 16:14] frontend-design - Completed T14.2 post-profile-save role redirect
+  Output files:
+    + components/profile/worker-profile-form.tsx
+    + components/profile/facility-profile-form.tsx
+  Checks passed: corepack pnpm lint PASS  corepack pnpm typecheck PASS  corepack pnpm test PASS
+  Next handoff to: agent-browser/tester - validate worker/facility redirect journeys in browser
+
+[2026-03-14 16:17] agent-browser/tester - Completed T14.3 role-based profile completion E2E verification
+  Output files:
+    + tests/e2e/auth-flow.spec.ts
+  Checks passed: corepack pnpm test:e2e PASS (5/5)
+  Next handoff to: reviewer - confirm redirect behavior and regression safety
+
+[2026-03-14 16:18] reviewer - Completed review gate for T14 changes
+  Findings: no blocking issues; profile save now routes users to role-appropriate next pages.
+  Next handoff to: coordinator - finalize docs and delivery summary
+
+[2026-03-14 16:35] backend/coordinator - Completed T15.1 demo data seeder and hosted insert execution
+  Output files:
+    + scripts/seed-demo-data.mjs
+    + package.json
+  Checks passed: node scripts/seed-demo-data.mjs PASS (all target tables populated)
+  Next handoff to: coordinator - publish demo data guide
+
+[2026-03-14 16:37] coordinator - Completed T15.2 demo handoff markdown
+  Output files:
+    + DEMO_DATA.md
+  Checks passed: documentation review PASS
+  Next handoff to: agent-browser/tester - execute full seeded module smoke
+
+[2026-03-14 16:45] agent-browser/tester - Completed T15.3 full seeded workflow E2E validation
+  Output files:
+    + tests/e2e/demo-dataset-smoke.spec.ts
+    + lib/supabase/client.ts
+  Checks passed: corepack pnpm lint PASS  corepack pnpm typecheck PASS  corepack pnpm test PASS  corepack pnpm test:e2e PASS (7/7)
+  Next handoff to: reviewer - final pass for demo readiness
+
+[2026-03-14 16:45] reviewer - Completed review gate for T15 changes
+  Findings: no blocking issues; demo users and seeded flows are ready for presentation walkthrough.
+  Next handoff to: coordinator - commit and release summary
+
