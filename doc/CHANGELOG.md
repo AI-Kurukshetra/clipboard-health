@@ -1,0 +1,46 @@
+# CHANGELOG
+
+## 2026-03-14
+- docs(doc): created `/doc` context management files and seeded MVP execution task list.
+- feat(config): bootstrapped Next.js 15 TypeScript strict project with Tailwind, Vitest, Playwright, and base utility/test setup.
+- feat(config): added Supabase SSR client wrappers, session middleware, and required env typing/example.
+- feat(db): added auth role migration with user role bootstrap trigger and RLS policies.
+- feat(api): implemented auth signup/login/logout route handlers with Zod validation and server actions.
+- feat(ui): added auth pages and protected dashboard layout with Supabase session checks.
+- feat(db): added worker/facility profile, facilities, and facility membership schema with RLS policy helpers.
+- feat(api): added worker/facility profile GET/PUT endpoints and profile validation schemas.
+- feat(ui): added TanStack Query provider and profile management forms for worker and facility data.
+- feat(db): added licenses and certifications schema with staffing-read RLS policies.
+- feat(api): added document upload URL and metadata APIs for licenses/certifications.
+- feat(fullstack): added worker availability management end-to-end (schema, API, and dashboard form).
+- feat(db): added shifts table/status lifecycle with facility-admin write policies.
+- feat(api): added shift listing, filtering, creation, and detail endpoints.
+- feat(ui): added shifts workspace with posting form and filtered shift browsing.
+- feat(db): added applications lifecycle schema with worker and facility-admin policy separation.
+- feat(api): implemented applications create/list/update endpoints including worker and facility scopes.
+- feat(ui): added applications dashboard workspace for apply flow and facility applicant review.
+- feat(db): added assignments lifecycle schema with shift-manager RLS authorization.
+- feat(api): added assignments create/list/update endpoints and worker assignment feed.
+- feat(ui): added assignments dashboard workspace for facility management and worker assignment tracking.
+- feat(db): added messaging conversation/message schema with participant-based realtime RLS.
+- feat(api): implemented messaging conversation/message APIs with participant authorization.
+- feat(ui): added messaging workspace with conversation list, thread view, and realtime message refresh.
+- feat(db): added timesheets schema with assignment-linked clock events and computed hours.
+- feat(api): added time tracking clock-in/clock-out endpoints and worker timesheet listing.
+- feat(ui): added time tracking dashboard workspace for clock actions and timesheet visibility.
+- feat(db): added review/rating schema linked to assignments with participant-scoped policies.
+- feat(api): added review creation/list/update API with completed-assignment guard.
+- feat(ui): added reviews workspace for review submission and history listing.
+- test(api): added route-level unit tests for auth login and timesheet validation failures.
+- test(e2e): added Playwright specs for auth pages, protected-route redirect, and workspace smoke coverage.
+- chore(config): initialized Supabase local config via `supabase init`; local stack start blocked by unavailable Docker engine.
+- test(e2e): resolved environment and browser prerequisites; Playwright suite now passes (4/4).
+- test(e2e): corrected protected-route assertion to match dashboard route-group URL behavior.
+- docs(doc): closed T10.2, T10.3, and T10.4 with blocker resolution and final handoff updates.
+- review(agents): reviewer gate completed with no blocking findings.
+- chore(db): attempted hosted Supabase link for migration sync; blocked pending CLI auth token (`SUPABASE_ACCESS_TOKEN`).
+- chore(db): linked hosted Supabase project `ccyfoscnarbjlnbbskbn` and pushed all 10 MVP migrations; remote migration history is fully in sync.
+- feat(ui): changed auth success navigation from `/dashboard` to `/profile` to target a real protected route.
+- test(e2e): upgraded auth flow spec to execute real signup, signout, and login journey with session guard assertions.
+- chore(test): executed Playwright auth validation against local Supabase env to bypass hosted signup rate-limit throttling.
+
