@@ -55,3 +55,12 @@
 - fix(ui): profile save now surfaces explicit fallback error when role-based redirect cannot be resolved.
 - test(e2e): stabilized auth and seeded dataset flows with timeout/selector hardening; full suite passes 9/9 on hosted config.
 
+- chore(deploy): started Vercel deployment workflow; blocked at CLI auth gate because no credentials/VERCEL_TOKEN are available in environment.
+- chore(deploy): authenticated Vercel CLI, created project `clipboard-health`, linked repo, and deployed production to `https://clipboard-health.vercel.app`.
+- chore(config): added `vercel.json` with `framework: nextjs` and added `.vercel` to `.gitignore`.
+- fix(router): moved conflicting dashboard root page from `app/(dashboard)/page.tsx` to `app/(dashboard)/dashboard/page.tsx` to resolve Vercel Next.js manifest tracing failure.
+- chore(config): pinned Node engine to `22.x` for Vercel runtime compatibility.
+- test(live): validated hosted auth against Vercel production (signup + login + protected pages) using Supabase cloud data.
+- feat(ui): added shared authenticated dashboard header with reusable `Logout` button available across protected pages.
+- test(e2e): updated auth flow spec to validate real logout interaction and post-logout protected route redirect.
+- chore(deploy): deployed logout update to Vercel production (`https://clipboard-health.vercel.app`) and verified live login->logout->redirect flow.

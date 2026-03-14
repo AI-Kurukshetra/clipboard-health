@@ -388,3 +388,42 @@
   Findings: no blocking issues; seeded edge cases now explicitly validated and handled with stable E2E coverage.
   Next handoff to: coordinator - commit and push
 
+[2026-03-14 17:08] coordinator - Phase 17 deployment bootstrap started; Vercel CLI installed but authentication missing
+  Output files:
+    + doc/TASKS.md
+    + doc/BLOCKERS.md
+  Blocked check: corepack pnpm dlx vercel whoami -> no existing credentials
+  Next handoff to: human - provide Vercel login (`vercel login`) or `VERCEL_TOKEN` to continue deployment
+[2026-03-14 17:17] coordinator - Verified Vercel CLI auth cannot be completed inside Codex agent runtime
+  Output files:
+    + doc/BLOCKERS.md
+    + doc/PROGRESS.md
+  Blocked check: `vercel whoami --debug` shows nonInteractive=true because stdin.isTTY is unavailable in agent session
+  Next handoff to: human - run `corepack pnpm dlx vercel login` in local interactive terminal and confirm `corepack pnpm dlx vercel whoami`
+[2026-03-14 17:49] coordinator - Completed Phase 17 Vercel deployment and live Supabase verification
+  Output files:
+    + .vercel/project.json
+    + vercel.json
+    + .gitignore
+    + app/(dashboard)/dashboard/page.tsx
+    + package.json
+    + doc/TASKS.md
+    + doc/BLOCKERS.md
+    + doc/PROGRESS.md
+    + doc/CHANGELOG.md
+    + doc/DECISIONS.md
+    + README.md
+  Checks passed: corepack pnpm dlx vercel whoami PASS  corepack pnpm dlx vercel deploy --prod --yes PASS  live signup PASS  live login/dashboard smoke PASS  corepack pnpm lint PASS  corepack pnpm typecheck PASS  corepack pnpm test PASS
+  Checks note: corepack pnpm test:e2e had one parallel timeout; targeted rerun of tests/e2e/demo-edge-cases.spec.ts passed serially (2/2)
+  Next handoff to: human - optional Vercel Git integration if branch-scoped preview env vars are needed
+[2026-03-14 18:19] coordinator - Completed Phase 18 logout UX and production rollout
+  Output files:
+    + components/auth/logout-button.tsx
+    + app/(dashboard)/layout.tsx
+    + tests/e2e/auth-flow.spec.ts
+    + doc/TASKS.md
+    + doc/PROGRESS.md
+    + doc/CHANGELOG.md
+    + doc/DECISIONS.md
+  Checks passed: corepack pnpm lint PASS  corepack pnpm typecheck PASS  corepack pnpm test PASS  corepack pnpm exec playwright test tests/e2e/auth-flow.spec.ts tests/e2e/protected-routes.spec.ts PASS  corepack pnpm dlx vercel deploy --prod --yes PASS  live login->logout smoke PASS
+  Next handoff to: human - optional full-suite E2E rerun if you want exhaustive post-deploy confidence

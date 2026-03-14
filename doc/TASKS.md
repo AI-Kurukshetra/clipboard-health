@@ -322,3 +322,56 @@ Legend: `[ ]` todo, `[~]` in-progress, `[x]` done, `[!]` blocked
 - Agent responsible: agent-browser / tester
 - Dependencies: T16.2
 
+
+## Phase 17 - Vercel Deployment
+
+### [x] T17.1 Authenticate Vercel CLI (2026-03-14 17:17)
+- Description: Establish Vercel CLI credentials required for project linking and deployment commands.
+- Files affected: `doc/TASKS.md`, `doc/BLOCKERS.md`
+- Agent responsible: coordinator
+- Dependencies: T16.3
+
+### [x] T17.2 Link Vercel project and configure production environment variables (2026-03-14 17:31)
+- Description: Link local repository to Vercel project and set Supabase cloud env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) for production; preview branch-scoped envs deferred until Vercel Git integration is enabled.
+- Files affected: `.vercel/project.json`, `doc/PROGRESS.md`, `doc/CHANGELOG.md`
+- Agent responsible: coordinator
+- Dependencies: T17.1
+
+### [x] T17.3 Deploy production build via Vercel CLI (2026-03-14 17:34)
+- Description: Run production deployment command and capture deployment URL/build logs.
+- Files affected: `doc/PROGRESS.md`, `doc/CHANGELOG.md`
+- Agent responsible: coordinator
+- Dependencies: T17.2
+
+### [x] T17.4 Validate live authentication and Supabase connectivity (2026-03-14 17:46)
+- Description: Verify signup/login/profile flow and core protected routes against deployed URL connected to hosted Supabase.
+- Files affected: `tests/e2e/*`, `doc/PROGRESS.md`, `doc/BLOCKERS.md`
+- Agent responsible: agent-browser / tester
+- Dependencies: T17.3
+
+### [x] T17.5 Finalize deployment handoff documentation (2026-03-14 17:49)
+- Description: Update deployment runbook and status docs with live URL, required envs, and verification outcomes.
+- Files affected: `README.md`, `doc/PROGRESS.md`, `doc/CHANGELOG.md`, `doc/DECISIONS.md`
+- Agent responsible: coordinator
+- Dependencies: T17.4
+
+
+## Phase 18 - Logout UX and Live Verification
+
+### [x] T18.1 Add shared logout control to protected dashboard layout (2026-03-14 18:16)
+- Description: Add a reusable logout button in dashboard layout header so sign-out is available on every authenticated page.
+- Files affected: `components/auth/logout-button.tsx`, `app/(dashboard)/layout.tsx`
+- Agent responsible: frontend-design (frontend)
+- Dependencies: T17.5
+
+### [x] T18.2 Validate logout flow in E2E auth tests (2026-03-14 18:17)
+- Description: Replace cookie-clearing shortcut with real logout interaction and protected-route re-auth checks.
+- Files affected: `tests/e2e/auth-flow.spec.ts`
+- Agent responsible: agent-browser / tester
+- Dependencies: T18.1
+
+### [x] T18.3 Deploy logout update to Vercel production and run live smoke (2026-03-14 18:19)
+- Description: Deploy updated build to production and verify login -> logout -> protected route redirect on live URL.
+- Files affected: `doc/PROGRESS.md`, `doc/CHANGELOG.md`, `doc/DECISIONS.md`
+- Agent responsible: coordinator
+- Dependencies: T18.2

@@ -3,6 +3,9 @@
 No active blockers.
 
 ## Resolved
+[2026-03-14] RESOLVED - coordinator
+Problem:   Vercel deployment was blocked because this Codex agent shell had no CLI credentials and was non-interactive for browser login.
+Resolution: User completed `vercel login` in an interactive terminal; coordinator then linked project and deployed successfully.
 [2026-03-14] RESOLVED - coordinator/db-migration
 Problem:   Hosted Supabase migration sync was blocked because CLI authentication was missing.
 Resolution: Provided `SUPABASE_ACCESS_TOKEN`, linked project `ccyfoscnarbjlnbbskbn`, and completed `supabase db push`.
@@ -22,4 +25,7 @@ Resolution: Installed browser via `corepack pnpm exec playwright install chromiu
 [2026-03-14] RESOLVED - agent-browser/tester
 Problem:   Hosted Supabase auth signup returned `email rate limit exceeded` during Playwright real signup/login test.
 Resolution: Executed E2E auth flow against local Supabase runtime with equivalent schema; full signup, signout, and login journey passed.
+
+
+
 

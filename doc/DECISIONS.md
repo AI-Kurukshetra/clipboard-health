@@ -21,3 +21,11 @@
 - Demo readiness now requires seeded edge-case regression checks in CI-grade E2E, not only happy-path journeys.
 - Post-save navigation is fail-safe: persistence success is preserved even if role-based redirect lookup fails, with explicit user-visible fallback guidance.
 
+- Vercel deployment is gated on CLI authentication (`vercel login` or `VERCEL_TOKEN`) before project linking/env sync/deploy commands can run in automation.
+- Vercel project `clipboard-health` is the production host; canonical live URL is `https://clipboard-health.vercel.app`.
+- Vercel project was initially created with framework `Other`; repository now enforces Next.js detection via `vercel.json` (`framework: nextjs`).
+- Route-group root conflict (`app/page.tsx` + `app/(dashboard)/page.tsx` both mapping to `/`) caused Vercel build trace instability; dashboard landing moved to `/dashboard` route.
+- Vercel production environment variables are configured for Supabase cloud integration; preview branch-scoped envs require Git integration in Vercel before automation can target specific branches.
+- Deployment verification standard now includes one live signup and one live login-to-protected-page smoke against production URL.
+- Logout is a first-class authenticated action in the shared dashboard layout, not page-specific, to keep sign-out discoverable across all protected routes.
+- Logout verification standard now requires real UI interaction in E2E (button click) rather than cookie-clearing shortcuts.

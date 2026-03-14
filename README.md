@@ -38,7 +38,7 @@ This repository implements the MVP for a multi-sided healthcare staffing workflo
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 22.x
 - pnpm 9+
 - Docker Desktop (required for local Supabase)
 - Supabase CLI (can be run via `pnpm dlx`)
@@ -124,6 +124,44 @@ corepack pnpm dlx supabase status -o env
 corepack pnpm dev
 ```
 
+## Vercel Deployment (Hosted Supabase)
+
+Live production URL:
+
+- `https://clipboard-health.vercel.app`
+
+Deploy from scratch:
+
+1. Authenticate Vercel CLI in an interactive terminal:
+
+```bash
+corepack pnpm dlx vercel login
+```
+
+2. Link/create project:
+
+```bash
+corepack pnpm dlx vercel project add clipboard-health
+corepack pnpm dlx vercel link --yes --project clipboard-health
+```
+
+3. Configure production environment variables (from `.env.local`):
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+4. Deploy:
+
+```bash
+corepack pnpm dlx vercel deploy --prod --yes
+```
+
+Notes:
+
+- This project uses `vercel.json` with `framework: nextjs`.
+- If you need branch-scoped Preview env vars, connect the Vercel project to Git first.
+
 ## Run Checks and Tests
 
 Lint:
@@ -198,3 +236,5 @@ Read these first before contributing:
 ## License
 
 Internal project repository for MVP delivery.
+
+

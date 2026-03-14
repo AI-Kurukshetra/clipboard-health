@@ -9,7 +9,7 @@ function uniqueCredentials(prefix: string) {
   };
 }
 
-test("worker can sign up, save profile, redirect to shifts, and sign in again", async ({ page, context }) => {
+test("worker can sign up, save profile, logout, and sign in again", async ({ page }) => {
   test.setTimeout(60_000);
   const creds = uniqueCredentials("worker");
 
@@ -38,7 +38,9 @@ test("worker can sign up, save profile, redirect to shifts, and sign in again", 
 
   await expect(page).toHaveURL(/.*\/shifts/, { timeout: 30_000 });
 
-  await context.clearCookies();
+  await page.getByRole("button", { name: "Logout" }).click();
+  await expect(page).toHaveURL(/.*\/login/, { timeout: 30_000 });
+
   await page.goto("/profile");
   await expect(page).toHaveURL(/.*\/login/);
 
