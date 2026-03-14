@@ -302,3 +302,23 @@ Legend: `[ ]` todo, `[~]` in-progress, `[x]` done, `[!]` blocked
 - Agent responsible: agent-browser / tester / frontend
 - Dependencies: T15.2
 
+## Phase 16 - Seeded Edge Case Hardening
+
+### [x] T16.1 Add seeded edge-case E2E coverage (2026-03-14 16:55)
+- Description: Validate duplicate applications, invalid review submission, and invalid timesheet actions using seeded demo identities.
+- Files affected: `tests/e2e/demo-edge-cases.spec.ts`
+- Agent responsible: agent-browser / tester
+- Dependencies: T15.3
+
+### [x] T16.2 Harden profile redirect failure handling (2026-03-14 16:56)
+- Description: Prevent silent failures when role lookup fails after successful profile save by showing explicit fallback message.
+- Files affected: `components/profile/worker-profile-form.tsx`, `components/profile/facility-profile-form.tsx`
+- Agent responsible: frontend-design (frontend)
+- Dependencies: T16.1
+
+### [x] T16.3 Stabilize full seeded E2E suite for demo reliability (2026-03-14 16:59)
+- Description: Tune long-path E2E timeouts/selectors for deterministic cross-module validation in hosted environment.
+- Files affected: `tests/e2e/auth-flow.spec.ts`, `tests/e2e/demo-dataset-smoke.spec.ts`
+- Agent responsible: agent-browser / tester
+- Dependencies: T16.2
+

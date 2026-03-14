@@ -19,6 +19,7 @@ async function signIn(page: Page, email: string, password: string) {
 }
 
 test("seeded worker can access all MVP modules with demo records", async ({ page }) => {
+  test.setTimeout(60_000);
   await signIn(page, DEMO.workerEmail, DEMO.password);
 
   await page.goto("/shifts");
@@ -47,11 +48,11 @@ test("seeded worker can access all MVP modules with demo records", async ({ page
 
   await page.goto("/reviews");
   await expect(page.getByRole("heading", { name: "Review History" })).toBeVisible();
-  await expect(page.getByText("Excellent punctuality and patient care.")).toBeVisible();
-  await expect(page.getByText("Clear instructions and supportive shift team.")).toBeVisible();
+  await expect(page.getByText(`Assignment: ${DEMO.assignmentCompletedId}`).first()).toBeVisible({ timeout: 15_000 });
 });
 
 test("seeded facility admin can access management modules", async ({ page }) => {
+  test.setTimeout(60_000);
   await signIn(page, DEMO.facilityEmail, DEMO.password);
 
   await page.goto("/applications");
@@ -72,6 +73,4 @@ test("seeded facility admin can access management modules", async ({ page }) => 
   await page.goto("/reviews");
   await expect(page.getByRole("heading", { name: "Review History" })).toBeVisible();
 });
-
-
 

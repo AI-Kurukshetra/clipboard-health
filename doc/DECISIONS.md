@@ -18,4 +18,6 @@
 - Demo environment strategy uses deterministic seeded entities with fixed UUIDs plus stable credentials, enabling repeatable end-to-end walkthroughs without manual data setup.
 - Full demo validation now includes seeded cross-module E2E smoke coverage (worker + facility admin paths) in addition to auth and route-guard tests.
 - Client Supabase initialization must avoid dynamic env key lookup (`requireEnv` pattern) in browser bundles; use direct `NEXT_PUBLIC_*` references instead.
+- Demo readiness now requires seeded edge-case regression checks in CI-grade E2E, not only happy-path journeys.
+- Post-save navigation is fail-safe: persistence success is preserved even if role-based redirect lookup fails, with explicit user-visible fallback guidance.
 

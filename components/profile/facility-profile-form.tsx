@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -72,6 +72,7 @@ function getPostSavePath(role: CurrentRole): "/shifts" | "/applications" {
 
 export function FacilityProfileForm() {
   const router = useRouter();
+  const [redirectError, setRedirectError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -112,10 +113,16 @@ export function FacilityProfileForm() {
       <form
         className="mt-4 grid gap-4"
         onSubmit={handleSubmit(async (values) => {
+          setRedirectError(null);
           await mutation.mutateAsync(values);
-          const role = roleQuery.data ?? (await fetchCurrentRole());
-          router.push(getPostSavePath(role));
-          router.refresh();
+
+          try {
+            const role = roleQuery.data ?? (await fetchCurrentRole());
+            router.push(getPostSavePath(role));
+            router.refresh();
+          } catch {
+            setRedirectError("Profile saved, but next-step routing failed. Please navigate manually.");
+          }
         })}
       >
         <input
@@ -137,6 +144,7 @@ export function FacilityProfileForm() {
         {roleQuery.isError && <p className="text-sm text-red-600">Unable to load account role.</p>}
         {mutation.isError && <p className="text-sm text-red-600">Unable to save facility profile.</p>}
         {mutation.isSuccess && <p className="text-sm text-green-700">Facility profile saved.</p>}
+        {redirectError && <p className="text-sm text-amber-700">{redirectError}</p>}
 
         <button
           type="submit"

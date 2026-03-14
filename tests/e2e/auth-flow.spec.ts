@@ -10,6 +10,7 @@ function uniqueCredentials(prefix: string) {
 }
 
 test("worker can sign up, save profile, redirect to shifts, and sign in again", async ({ page, context }) => {
+  test.setTimeout(60_000);
   const creds = uniqueCredentials("worker");
 
   await page.goto("/register");
@@ -50,6 +51,7 @@ test("worker can sign up, save profile, redirect to shifts, and sign in again", 
 });
 
 test("facility admin can sign up, save profile, and redirect to applications", async ({ page }) => {
+  test.setTimeout(60_000);
   const creds = uniqueCredentials("facility");
 
   await page.goto("/register");

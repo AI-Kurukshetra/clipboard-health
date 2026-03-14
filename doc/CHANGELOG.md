@@ -51,4 +51,7 @@
 - docs(demo): added `DEMO_DATA.md` with demo credentials, fixed entity IDs, and guided walkthrough steps.
 - fix(ui): updated browser Supabase client env handling to use Next.js-safe `NEXT_PUBLIC_*` access in client runtime.
 - test(e2e): added seeded dataset module smoke spec and validated full E2E suite (7/7).
+- test(e2e): added seeded edge-case coverage for duplicate application, invalid review submission, and invalid timesheet action handling.
+- fix(ui): profile save now surfaces explicit fallback error when role-based redirect cannot be resolved.
+- test(e2e): stabilized auth and seeded dataset flows with timeout/selector hardening; full suite passes 9/9 on hosted config.
 
