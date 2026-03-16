@@ -1,18 +1,45 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
+import { createClient } from "@/lib/supabase/server";
 import { FacilityProfileForm } from "@/components/profile/facility-profile-form";
 import { WorkerProfileForm } from "@/components/profile/worker-profile-form";
+import { PageHeader } from "@/components/layout/page-header";
 
 export const metadata: Metadata = {
   title: "Profile",
-  description: "Manage worker and facility profile data",
+  description: "Manage your profile data",
 };
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const role = (user.user_metadata?.role as string) ?? "healthcare_worker";
+
   return (
-    <main className="mx-auto grid w-full max-w-5xl gap-6 px-6 py-10 md:grid-cols-2">
-      <WorkerProfileForm />
-      <FacilityProfileForm />
-    </main>
+    <div className="space-y-6">
+      <PageHeader
+        title="Profile"
+        description={
+          role === "facility_admin"
+            ? "Manage your facility profile"
+            : "Manage your worker profile"
+        }
+      />
+      <div className="max-w-2xl">
+        {role === "facility_admin" ? (
+          <FacilityProfileForm />
+        ) : (
+          <WorkerProfileForm />
+        )}
+      </div>
+    </div>
   );
 }
