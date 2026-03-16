@@ -2,6 +2,25 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Timer, Play, Square } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TableSkeleton } from "@/components/ui/loading-skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/layout/page-header";
 
 type TimesheetRecord = {
   id: string;
@@ -19,38 +38,25 @@ type TimesheetResponse = {
 async function fetchMyTimesheets(): Promise<TimesheetRecord[]> {
   const response = await fetch("/api/timesheets/my");
   const payload = (await response.json()) as TimesheetResponse;
-
-  if (!response.ok) {
-    throw new Error(payload.error ?? "Failed to load timesheets");
-  }
-
+  if (!response.ok) throw new Error(payload.error ?? "Failed to load timesheets");
   return payload.data;
 }
 
 async function fetchFacilityTimesheets(assignmentId: string): Promise<TimesheetRecord[]> {
   const response = await fetch(`/api/timesheets?scope=facility&assignment_id=${assignmentId}`);
   const payload = (await response.json()) as TimesheetResponse;
-
-  if (!response.ok) {
-    throw new Error(payload.error ?? "Failed to load facility timesheets");
-  }
-
+  if (!response.ok) throw new Error(payload.error ?? "Failed to load facility timesheets");
   return payload.data;
 }
 
 async function clockAction(payload: { assignment_id: string; action: "clock_in" | "clock_out" }): Promise<void> {
   const response = await fetch("/api/timesheets", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-
   const body = (await response.json()) as { error?: string };
-  if (!response.ok) {
-    throw new Error(body.error ?? "Clock action failed");
-  }
+  if (!response.ok) throw new Error(body.error ?? "Clock action failed");
 }
 
 export function TimesheetsWorkspace() {
@@ -72,99 +78,147 @@ export function TimesheetsWorkspace() {
     mutationFn: clockAction,
     onSuccess: async () => {
       await myTimesheetsQuery.refetch();
-      if (facilityAssignmentId) {
-        await facilityTimesheetsQuery.refetch();
-      }
+      if (facilityAssignmentId) await facilityTimesheetsQuery.refetch();
     },
   });
 
   return (
-    <main className="mx-auto grid w-full max-w-6xl gap-6 px-6 py-8 lg:grid-cols-2">
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h1 className="text-xl font-semibold text-slate-900">Clock In / Out</h1>
-        <div className="mt-4 grid gap-3">
-          <input
-            value={assignmentId}
-            onChange={(event) => setAssignmentId(event.target.value)}
-            placeholder="Assignment ID"
-            className="rounded border px-3 py-2 text-sm"
-          />
-          <div className="flex gap-2">
-            <button
-              className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white"
-              onClick={async () => {
-                if (assignmentId) {
-                  await actionMutation.mutateAsync({
-                    assignment_id: assignmentId,
-                    action: "clock_in",
-                  });
-                }
-              }}
-            >
-              Clock In
-            </button>
-            <button
-              className="rounded border border-slate-300 px-3 py-2 text-sm"
-              onClick={async () => {
-                if (assignmentId) {
-                  await actionMutation.mutateAsync({
-                    assignment_id: assignmentId,
-                    action: "clock_out",
-                  });
-                }
-              }}
-            >
-              Clock Out
-            </button>
+    <div className="space-y-6">
+      <PageHeader title="Time Tracking" description="Clock in/out and view worked hours" />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Clock In / Out</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Assignment ID</Label>
+            <Input
+              value={assignmentId}
+              onChange={(e) => setAssignmentId(e.target.value)}
+              className="max-w-xs"
+            />
           </div>
-        </div>
+          <div className="flex gap-2">
+            <Button
+              size="lg"
+              onClick={async () => {
+                if (assignmentId) {
+                  await actionMutation.mutateAsync({ assignment_id: assignmentId, action: "clock_in" });
+                }
+              }}
+              disabled={actionMutation.isPending || !assignmentId}
+            >
+              <Play className="h-4 w-4" />
+              Clock In
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={async () => {
+                if (assignmentId) {
+                  await actionMutation.mutateAsync({ assignment_id: assignmentId, action: "clock_out" });
+                }
+              }}
+              disabled={actionMutation.isPending || !assignmentId}
+            >
+              <Square className="h-4 w-4" />
+              Clock Out
+            </Button>
+          </div>
+          {actionMutation.isError && <Alert variant="destructive"><AlertDescription>Clock action failed.</AlertDescription></Alert>}
+          {actionMutation.isSuccess && <Alert><AlertDescription>Timesheet updated.</AlertDescription></Alert>}
+        </CardContent>
+      </Card>
 
-        {actionMutation.isError && <p className="mt-3 text-sm text-red-600">Clock action failed.</p>}
-        {actionMutation.isSuccess && <p className="mt-3 text-sm text-green-700">Timesheet updated.</p>}
+      <Tabs defaultValue="my-timesheets">
+        <TabsList>
+          <TabsTrigger value="my-timesheets">My Timesheets</TabsTrigger>
+          <TabsTrigger value="facility">Facility View</TabsTrigger>
+        </TabsList>
 
-        <h2 className="mt-6 text-lg font-semibold text-slate-900">My Timesheets</h2>
-        {myTimesheetsQuery.isPending && <p className="mt-2 text-sm text-slate-500">Loading timesheets...</p>}
-        {myTimesheetsQuery.isError && <p className="mt-2 text-sm text-red-600">Unable to load timesheets.</p>}
+        <TabsContent value="my-timesheets">
+          <Card>
+            <CardContent className="pt-6">
+              {myTimesheetsQuery.isPending && <TableSkeleton />}
+              {myTimesheetsQuery.isError && <Alert variant="destructive"><AlertDescription>Unable to load timesheets.</AlertDescription></Alert>}
 
-        <div className="mt-3 space-y-3">
-          {myTimesheetsQuery.data?.map((timesheet) => (
-            <article key={timesheet.id} className="rounded-lg border border-slate-200 p-3">
-              <p className="text-sm font-medium text-slate-900">Assignment: {timesheet.assignment_id}</p>
-              <p className="text-sm text-slate-600">Clock in: {timesheet.clock_in_time ?? "-"}</p>
-              <p className="text-sm text-slate-600">Clock out: {timesheet.clock_out_time ?? "-"}</p>
-              <p className="text-sm text-slate-700">Hours: {timesheet.hours_worked ?? 0}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+              {myTimesheetsQuery.data && myTimesheetsQuery.data.length === 0 && (
+                <EmptyState icon={Timer} title="No timesheets" description="You don't have any timesheet records yet." />
+              )}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-semibold text-slate-900">Facility Timesheet Visibility</h2>
-        <input
-          value={facilityAssignmentId}
-          onChange={(event) => setFacilityAssignmentId(event.target.value)}
-          placeholder="Assignment ID"
-          className="mt-4 w-full rounded border px-3 py-2 text-sm"
-        />
+              {myTimesheetsQuery.data && myTimesheetsQuery.data.length > 0 && (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Assignment</TableHead>
+                      <TableHead>Clock In</TableHead>
+                      <TableHead>Clock Out</TableHead>
+                      <TableHead>Hours</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {myTimesheetsQuery.data.map((ts) => (
+                      <TableRow key={ts.id}>
+                        <TableCell className="font-medium">{ts.assignment_id}</TableCell>
+                        <TableCell>{ts.clock_in_time ?? "-"}</TableCell>
+                        <TableCell>{ts.clock_out_time ?? "-"}</TableCell>
+                        <TableCell>{ts.hours_worked ?? 0}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        {facilityTimesheetsQuery.isPending && facilityAssignmentId && (
-          <p className="mt-3 text-sm text-slate-500">Loading facility timesheets...</p>
-        )}
-        {facilityTimesheetsQuery.isError && (
-          <p className="mt-3 text-sm text-red-600">Unable to load facility timesheets.</p>
-        )}
+        <TabsContent value="facility" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Facility Timesheet Visibility</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Input
+                value={facilityAssignmentId}
+                onChange={(e) => setFacilityAssignmentId(e.target.value)}
+                placeholder="Enter Assignment ID"
+                className="max-w-xs"
+              />
+            </CardContent>
+          </Card>
 
-        <div className="mt-3 space-y-3">
-          {facilityTimesheetsQuery.data?.map((timesheet) => (
-            <article key={timesheet.id} className="rounded-lg border border-slate-200 p-3">
-              <p className="text-sm font-medium text-slate-900">Assignment: {timesheet.assignment_id}</p>
-              <p className="text-sm text-slate-600">Clock in: {timesheet.clock_in_time ?? "-"}</p>
-              <p className="text-sm text-slate-600">Clock out: {timesheet.clock_out_time ?? "-"}</p>
-              <p className="text-sm text-slate-700">Hours: {timesheet.hours_worked ?? 0}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
+          {facilityTimesheetsQuery.isPending && facilityAssignmentId && <TableSkeleton rows={3} />}
+          {facilityTimesheetsQuery.isError && <Alert variant="destructive"><AlertDescription>Unable to load facility timesheets.</AlertDescription></Alert>}
+
+          {facilityTimesheetsQuery.data && facilityTimesheetsQuery.data.length > 0 && (
+            <Card>
+              <CardContent className="pt-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Assignment</TableHead>
+                      <TableHead>Clock In</TableHead>
+                      <TableHead>Clock Out</TableHead>
+                      <TableHead>Hours</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {facilityTimesheetsQuery.data.map((ts) => (
+                      <TableRow key={ts.id}>
+                        <TableCell className="font-medium">{ts.assignment_id}</TableCell>
+                        <TableCell>{ts.clock_in_time ?? "-"}</TableCell>
+                        <TableCell>{ts.clock_out_time ?? "-"}</TableCell>
+                        <TableCell>{ts.hours_worked ?? 0}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

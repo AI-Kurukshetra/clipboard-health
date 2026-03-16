@@ -10,11 +10,12 @@ import {
   WorkerProfileSchema,
   type WorkerProfileInput,
 } from "@/lib/validations/worker-profile";
-
-type WorkerProfileResponse = {
-  data: WorkerProfileInput | null;
-  error?: string;
-};
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type CurrentRole = "healthcare_worker" | "facility_admin" | "admin";
 
@@ -27,7 +28,7 @@ type CurrentRoleResponse = {
 
 async function fetchWorkerProfile(): Promise<WorkerProfileInput | null> {
   const response = await fetch("/api/workers/me");
-  const payload = (await response.json()) as WorkerProfileResponse;
+  const payload = (await response.json()) as { data: WorkerProfileInput | null; error?: string };
 
   if (!response.ok) {
     throw new Error(payload.error ?? "Failed to load worker profile");
@@ -39,13 +40,11 @@ async function fetchWorkerProfile(): Promise<WorkerProfileInput | null> {
 async function saveWorkerProfile(values: WorkerProfileInput): Promise<void> {
   const response = await fetch("/api/workers/me", {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(values),
   });
 
-  const payload = (await response.json()) as WorkerProfileResponse;
+  const payload = (await response.json()) as { error?: string };
   if (!response.ok) {
     throw new Error(payload.error ?? "Failed to save worker profile");
   }
@@ -66,7 +65,6 @@ function getPostSavePath(role: CurrentRole): "/shifts" | "/applications" {
   if (role === "facility_admin" || role === "admin") {
     return "/applications";
   }
-
   return "/shifts";
 }
 
@@ -111,52 +109,69 @@ export function WorkerProfileForm() {
   });
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6">
-      <h2 className="text-lg font-semibold text-slate-900">Worker Profile</h2>
-      <form
-        className="mt-4 grid gap-4"
-        onSubmit={handleSubmit(async (values) => {
-          setRedirectError(null);
-          await mutation.mutateAsync(values);
+    <Card>
+      <CardHeader>
+        <CardTitle>Worker Profile</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form
+          className="space-y-4"
+          onSubmit={handleSubmit(async (values) => {
+            setRedirectError(null);
+            await mutation.mutateAsync(values);
 
-          try {
-            const role = roleQuery.data ?? (await fetchCurrentRole());
-            router.push(getPostSavePath(role));
-            router.refresh();
-          } catch {
-            setRedirectError("Profile saved, but next-step routing failed. Please navigate manually.");
-          }
-        })}
-      >
-        <input {...register("full_name")} placeholder="Full name" className="rounded border px-3 py-2 text-sm" />
-        {errors.full_name && <p className="text-xs text-red-600">{errors.full_name.message}</p>}
-
-        <input {...register("phone")} placeholder="Phone" className="rounded border px-3 py-2 text-sm" />
-        <input {...register("location")} placeholder="Location" className="rounded border px-3 py-2 text-sm" />
-        <input {...register("specialty")} placeholder="Specialty" className="rounded border px-3 py-2 text-sm" />
-        <input
-          type="number"
-          {...register("years_experience", { valueAsNumber: true })}
-          placeholder="Years of experience"
-          className="rounded border px-3 py-2 text-sm"
-        />
-        <textarea {...register("bio")} placeholder="Bio" className="rounded border px-3 py-2 text-sm" />
-
-        {query.isPending && <p className="text-sm text-slate-500">Loading profile...</p>}
-        {query.isError && <p className="text-sm text-red-600">Unable to load worker profile.</p>}
-        {roleQuery.isError && <p className="text-sm text-red-600">Unable to load account role.</p>}
-        {mutation.isError && <p className="text-sm text-red-600">Unable to save worker profile.</p>}
-        {mutation.isSuccess && <p className="text-sm text-green-700">Worker profile saved.</p>}
-        {redirectError && <p className="text-sm text-amber-700">{redirectError}</p>}
-
-        <button
-          type="submit"
-          className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white"
-          disabled={mutation.isPending || roleQuery.isPending}
+            try {
+              const role = roleQuery.data ?? (await fetchCurrentRole());
+              router.push(getPostSavePath(role));
+              router.refresh();
+            } catch {
+              setRedirectError("Profile saved, but next-step routing failed. Please navigate manually.");
+            }
+          })}
         >
-          {mutation.isPending ? "Saving..." : "Save Worker Profile"}
-        </button>
-      </form>
-    </section>
+          <div className="space-y-2">
+            <Label htmlFor="full_name">Full name</Label>
+            <Input id="full_name" {...register("full_name")} />
+            {errors.full_name && <p className="text-[0.8rem] font-medium text-destructive">{errors.full_name.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone</Label>
+            <Input id="phone" {...register("phone")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="location">Location</Label>
+            <Input id="location" {...register("location")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="specialty">Specialty</Label>
+            <Input id="specialty" {...register("specialty")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="years_experience">Years of experience</Label>
+            <Input id="years_experience" type="number" {...register("years_experience", { valueAsNumber: true })} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bio">Bio</Label>
+            <Textarea id="bio" {...register("bio")} />
+          </div>
+
+          {query.isPending && <p className="text-sm text-muted-foreground">Loading profile...</p>}
+          {query.isError && <Alert variant="destructive"><AlertDescription>Unable to load worker profile.</AlertDescription></Alert>}
+          {roleQuery.isError && <Alert variant="destructive"><AlertDescription>Unable to load account role.</AlertDescription></Alert>}
+          {mutation.isError && <Alert variant="destructive"><AlertDescription>Unable to save worker profile.</AlertDescription></Alert>}
+          {mutation.isSuccess && <Alert><AlertDescription>Worker profile saved.</AlertDescription></Alert>}
+          {redirectError && <Alert><AlertDescription>{redirectError}</AlertDescription></Alert>}
+
+          <Button type="submit" disabled={mutation.isPending || roleQuery.isPending}>
+            {mutation.isPending ? "Saving..." : "Save Worker Profile"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

@@ -4,12 +4,26 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
+import { Plus, Trash2 } from "lucide-react";
 
 import {
   AvailabilityPayloadSchema,
   type AvailabilityPayloadInput,
   type AvailabilitySlotInput,
 } from "@/lib/validations/availability";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PageHeader } from "@/components/layout/page-header";
 
 type AvailabilityResponse = {
   data: AvailabilitySlotInput[];
@@ -23,30 +37,23 @@ const defaultSlot: AvailabilitySlotInput = {
   preference_note: "",
 };
 
+const dayLabels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
 async function fetchAvailability(): Promise<AvailabilitySlotInput[]> {
   const response = await fetch("/api/availability");
   const payload = (await response.json()) as AvailabilityResponse;
-
-  if (!response.ok) {
-    throw new Error(payload.error ?? "Failed to load availability");
-  }
-
+  if (!response.ok) throw new Error(payload.error ?? "Failed to load availability");
   return payload.data ?? [];
 }
 
 async function saveAvailability(values: AvailabilityPayloadInput): Promise<void> {
   const response = await fetch("/api/availability", {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(values),
   });
-
   const payload = (await response.json()) as AvailabilityResponse;
-  if (!response.ok) {
-    throw new Error(payload.error ?? "Failed to save availability");
-  }
+  if (!response.ok) throw new Error(payload.error ?? "Failed to save availability");
 }
 
 export function AvailabilityForm() {
@@ -80,69 +87,90 @@ export function AvailabilityForm() {
   });
 
   return (
-    <section className="mx-auto mt-8 w-full max-w-4xl rounded-xl border border-slate-200 bg-white p-6">
-      <h1 className="text-xl font-semibold text-slate-900">Availability</h1>
-      <p className="mt-1 text-sm text-slate-600">Set your preferred weekly working hours.</p>
+    <div className="space-y-6">
+      <PageHeader
+        title="Availability"
+        description="Set your preferred weekly working hours"
+      />
 
-      <form
-        className="mt-6 space-y-4"
-        onSubmit={form.handleSubmit(async (values) => {
-          await mutation.mutateAsync(values);
-        })}
-      >
-        {fieldArray.fields.map((field, index) => (
-          <div key={field.id} className="grid gap-3 rounded-lg border border-slate-200 p-4 md:grid-cols-4">
-            <select
-              className="rounded border px-3 py-2 text-sm"
-              {...form.register(`slots.${index}.day_of_week`, { valueAsNumber: true })}
-            >
-              <option value={0}>Sunday</option>
-              <option value={1}>Monday</option>
-              <option value={2}>Tuesday</option>
-              <option value={3}>Wednesday</option>
-              <option value={4}>Thursday</option>
-              <option value={5}>Friday</option>
-              <option value={6}>Saturday</option>
-            </select>
-            <input type="time" className="rounded border px-3 py-2 text-sm" {...form.register(`slots.${index}.start_time`)} />
-            <input type="time" className="rounded border px-3 py-2 text-sm" {...form.register(`slots.${index}.end_time`)} />
-            <button
-              type="button"
-              onClick={() => fieldArray.remove(index)}
-              className="rounded border border-slate-300 px-3 py-2 text-sm"
-            >
-              Remove
-            </button>
-            <input
-              placeholder="Preference note"
-              className="md:col-span-4 rounded border px-3 py-2 text-sm"
-              {...form.register(`slots.${index}.preference_note`)}
-            />
-          </div>
-        ))}
-
-        {query.isPending && <p className="text-sm text-slate-500">Loading availability...</p>}
-        {query.isError && <p className="text-sm text-red-600">Unable to load availability.</p>}
-        {mutation.isError && <p className="text-sm text-red-600">Unable to save availability.</p>}
-        {mutation.isSuccess && <p className="text-sm text-green-700">Availability saved.</p>}
-
-        <div className="flex gap-3">
-          <button
-            type="button"
-            className="rounded border border-slate-300 px-3 py-2 text-sm"
-            onClick={() => fieldArray.append(defaultSlot)}
+      <Card>
+        <CardContent className="pt-6">
+          <form
+            className="space-y-4"
+            onSubmit={form.handleSubmit(async (values) => {
+              await mutation.mutateAsync(values);
+            })}
           >
-            Add Slot
-          </button>
-          <button
-            type="submit"
-            className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white"
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? "Saving..." : "Save Availability"}
-          </button>
-        </div>
-      </form>
-    </section>
+            {fieldArray.fields.map((field, index) => (
+              <Card key={field.id}>
+                <CardContent className="grid gap-4 pt-6 md:grid-cols-4">
+                  <div className="space-y-2">
+                    <Label>Day</Label>
+                    <Select
+                      value={String(form.watch(`slots.${index}.day_of_week`))}
+                      onValueChange={(value) => form.setValue(`slots.${index}.day_of_week`, Number(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dayLabels.map((label, i) => (
+                          <SelectItem key={i} value={String(i)}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Start Time</Label>
+                    <Input type="time" {...form.register(`slots.${index}.start_time`)} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>End Time</Label>
+                    <Input type="time" {...form.register(`slots.${index}.end_time`)} />
+                  </div>
+
+                  <div className="flex items-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => fieldArray.remove(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2 md:col-span-4">
+                    <Label>Preference note</Label>
+                    <Input {...form.register(`slots.${index}.preference_note`)} placeholder="Optional note" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+            {query.isPending && <p className="text-sm text-muted-foreground">Loading availability...</p>}
+            {query.isError && <Alert variant="destructive"><AlertDescription>Unable to load availability.</AlertDescription></Alert>}
+            {mutation.isError && <Alert variant="destructive"><AlertDescription>Unable to save availability.</AlertDescription></Alert>}
+            {mutation.isSuccess && <Alert><AlertDescription>Availability saved.</AlertDescription></Alert>}
+
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fieldArray.append(defaultSlot)}
+              >
+                <Plus className="h-4 w-4" />
+                Add Slot
+              </Button>
+              <Button type="submit" disabled={mutation.isPending}>
+                {mutation.isPending ? "Saving..." : "Save Availability"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

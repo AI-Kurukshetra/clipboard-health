@@ -10,11 +10,11 @@ import {
   FacilityProfileSchema,
   type FacilityProfileInput,
 } from "@/lib/validations/facility-profile";
-
-type FacilityProfileResponse = {
-  data: FacilityProfileInput | null;
-  error?: string;
-};
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type CurrentRole = "healthcare_worker" | "facility_admin" | "admin";
 
@@ -27,7 +27,7 @@ type CurrentRoleResponse = {
 
 async function fetchFacilityProfile(): Promise<FacilityProfileInput | null> {
   const response = await fetch("/api/facilities/me");
-  const payload = (await response.json()) as FacilityProfileResponse;
+  const payload = (await response.json()) as { data: FacilityProfileInput | null; error?: string };
 
   if (!response.ok) {
     throw new Error(payload.error ?? "Failed to load facility profile");
@@ -39,13 +39,11 @@ async function fetchFacilityProfile(): Promise<FacilityProfileInput | null> {
 async function saveFacilityProfile(values: FacilityProfileInput): Promise<void> {
   const response = await fetch("/api/facilities/me", {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(values),
   });
 
-  const payload = (await response.json()) as FacilityProfileResponse;
+  const payload = (await response.json()) as { error?: string };
   if (!response.ok) {
     throw new Error(payload.error ?? "Failed to save facility profile");
   }
@@ -66,7 +64,6 @@ function getPostSavePath(role: CurrentRole): "/shifts" | "/applications" {
   if (role === "facility_admin" || role === "admin") {
     return "/applications";
   }
-
   return "/shifts";
 }
 
@@ -108,52 +105,54 @@ export function FacilityProfileForm() {
   });
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6">
-      <h2 className="text-lg font-semibold text-slate-900">Facility Profile</h2>
-      <form
-        className="mt-4 grid gap-4"
-        onSubmit={handleSubmit(async (values) => {
-          setRedirectError(null);
-          await mutation.mutateAsync(values);
+    <Card>
+      <CardHeader>
+        <CardTitle>Facility Profile</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form
+          className="space-y-4"
+          onSubmit={handleSubmit(async (values) => {
+            setRedirectError(null);
+            await mutation.mutateAsync(values);
 
-          try {
-            const role = roleQuery.data ?? (await fetchCurrentRole());
-            router.push(getPostSavePath(role));
-            router.refresh();
-          } catch {
-            setRedirectError("Profile saved, but next-step routing failed. Please navigate manually.");
-          }
-        })}
-      >
-        <input
-          {...register("contact_name")}
-          placeholder="Contact name"
-          className="rounded border px-3 py-2 text-sm"
-        />
-        {errors.contact_name && <p className="text-xs text-red-600">{errors.contact_name.message}</p>}
-
-        <input {...register("phone")} placeholder="Phone" className="rounded border px-3 py-2 text-sm" />
-        <input
-          {...register("organization_name")}
-          placeholder="Organization name"
-          className="rounded border px-3 py-2 text-sm"
-        />
-
-        {query.isPending && <p className="text-sm text-slate-500">Loading profile...</p>}
-        {query.isError && <p className="text-sm text-red-600">Unable to load facility profile.</p>}
-        {roleQuery.isError && <p className="text-sm text-red-600">Unable to load account role.</p>}
-        {mutation.isError && <p className="text-sm text-red-600">Unable to save facility profile.</p>}
-        {mutation.isSuccess && <p className="text-sm text-green-700">Facility profile saved.</p>}
-        {redirectError && <p className="text-sm text-amber-700">{redirectError}</p>}
-
-        <button
-          type="submit"
-          className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white"
-          disabled={mutation.isPending || roleQuery.isPending}
+            try {
+              const role = roleQuery.data ?? (await fetchCurrentRole());
+              router.push(getPostSavePath(role));
+              router.refresh();
+            } catch {
+              setRedirectError("Profile saved, but next-step routing failed. Please navigate manually.");
+            }
+          })}
         >
-          {mutation.isPending ? "Saving..." : "Save Facility Profile"}
-        </button>
-      </form>
-    </section>
+          <div className="space-y-2">
+            <Label htmlFor="contact_name">Contact name</Label>
+            <Input id="contact_name" {...register("contact_name")} />
+            {errors.contact_name && <p className="text-[0.8rem] font-medium text-destructive">{errors.contact_name.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone</Label>
+            <Input id="phone" {...register("phone")} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="organization_name">Organization name</Label>
+            <Input id="organization_name" {...register("organization_name")} />
+          </div>
+
+          {query.isPending && <p className="text-sm text-muted-foreground">Loading profile...</p>}
+          {query.isError && <Alert variant="destructive"><AlertDescription>Unable to load facility profile.</AlertDescription></Alert>}
+          {roleQuery.isError && <Alert variant="destructive"><AlertDescription>Unable to load account role.</AlertDescription></Alert>}
+          {mutation.isError && <Alert variant="destructive"><AlertDescription>Unable to save facility profile.</AlertDescription></Alert>}
+          {mutation.isSuccess && <Alert><AlertDescription>Facility profile saved.</AlertDescription></Alert>}
+          {redirectError && <Alert><AlertDescription>{redirectError}</AlertDescription></Alert>}
+
+          <Button type="submit" disabled={mutation.isPending || roleQuery.isPending}>
+            {mutation.isPending ? "Saving..." : "Save Facility Profile"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

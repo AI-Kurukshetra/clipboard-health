@@ -1,9 +1,28 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MessageSquare, Plus, Send } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/layout/page-header";
 
 type Conversation = {
   id: string;
@@ -21,60 +40,39 @@ type Message = {
 async function fetchConversations(): Promise<Conversation[]> {
   const response = await fetch("/api/messages");
   const payload = (await response.json()) as { data: Conversation[]; error?: string };
-
-  if (!response.ok) {
-    throw new Error(payload.error ?? "Failed to load conversations");
-  }
-
+  if (!response.ok) throw new Error(payload.error ?? "Failed to load conversations");
   return payload.data;
 }
 
 async function fetchMessages(conversationId: string): Promise<Message[]> {
   const response = await fetch(`/api/messages?conversation_id=${conversationId}`);
   const payload = (await response.json()) as { data: Message[]; error?: string };
-
-  if (!response.ok) {
-    throw new Error(payload.error ?? "Failed to load messages");
-  }
-
+  if (!response.ok) throw new Error(payload.error ?? "Failed to load messages");
   return payload.data;
 }
 
 async function createConversation(participantIds: string[]): Promise<void> {
   const response = await fetch("/api/messages", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      type: "conversation",
-      participant_ids: participantIds,
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "conversation", participant_ids: participantIds }),
   });
-
   const payload = (await response.json()) as { error?: string };
-  if (!response.ok) {
-    throw new Error(payload.error ?? "Failed to create conversation");
-  }
+  if (!response.ok) throw new Error(payload.error ?? "Failed to create conversation");
 }
 
 async function sendMessage(payload: { conversationId: string; body: string }): Promise<void> {
   const response = await fetch("/api/messages", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       type: "message",
       conversation_id: payload.conversationId,
       body: payload.body,
     }),
   });
-
   const body = (await response.json()) as { error?: string };
-  if (!response.ok) {
-    throw new Error(body.error ?? "Failed to send message");
-  }
+  if (!response.ok) throw new Error(body.error ?? "Failed to send message");
 }
 
 export function MessagesWorkspace() {
@@ -82,6 +80,8 @@ export function MessagesWorkspace() {
   const [selectedConversationId, setSelectedConversationId] = useState("");
   const [participantIdsInput, setParticipantIdsInput] = useState("");
   const [messageInput, setMessageInput] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const conversationsQuery = useQuery({
     queryKey: ["conversations"],
@@ -95,9 +95,7 @@ export function MessagesWorkspace() {
   });
 
   useEffect(() => {
-    if (!selectedConversationId) {
-      return;
-    }
+    if (!selectedConversationId) return;
 
     const channel = supabase
       .channel(`conversation:${selectedConversationId}`)
@@ -120,10 +118,15 @@ export function MessagesWorkspace() {
     };
   }, [messagesQuery, selectedConversationId, supabase]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messagesQuery.data]);
+
   const createConversationMutation = useMutation({
     mutationFn: createConversation,
     onSuccess: async () => {
       setParticipantIdsInput("");
+      setDialogOpen(false);
       await conversationsQuery.refetch();
     },
   });
@@ -137,97 +140,142 @@ export function MessagesWorkspace() {
   });
 
   return (
-    <main className="mx-auto grid w-full max-w-6xl gap-6 px-6 py-8 lg:grid-cols-[320px_1fr]">
-      <section className="rounded-xl border border-slate-200 bg-white p-4">
-        <h1 className="text-lg font-semibold text-slate-900">Conversations</h1>
+    <div className="space-y-6">
+      <PageHeader
+        title="Messages"
+        description="Chat with facilities and workers"
+        actions={
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4" />
+                New Conversation
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>New Conversation</DialogTitle>
+                <DialogDescription>Enter participant IDs to start a conversation.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Participant IDs (comma-separated)</Label>
+                  <Input
+                    value={participantIdsInput}
+                    onChange={(e) => setParticipantIdsInput(e.target.value)}
+                  />
+                </div>
+                {createConversationMutation.isError && <Alert variant="destructive"><AlertDescription>Failed to create conversation.</AlertDescription></Alert>}
+                <Button
+                  className="w-full"
+                  onClick={async () => {
+                    const ids = participantIdsInput.split(",").map((v) => v.trim()).filter(Boolean);
+                    if (ids.length > 0) await createConversationMutation.mutateAsync(ids);
+                  }}
+                  disabled={createConversationMutation.isPending}
+                >
+                  Create
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
-        <div className="mt-4 grid gap-2">
-          <input
-            value={participantIdsInput}
-            onChange={(event) => setParticipantIdsInput(event.target.value)}
-            placeholder="Participant IDs (comma-separated)"
-            className="rounded border px-3 py-2 text-sm"
-          />
-          <button
-            className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white"
-            onClick={async () => {
-              const participantIds = participantIdsInput
-                .split(",")
-                .map((value) => value.trim())
-                .filter(Boolean);
-
-              if (participantIds.length > 0) {
-                await createConversationMutation.mutateAsync(participantIds);
-              }
-            }}
-          >
-            New Conversation
-          </button>
-        </div>
-
-        {conversationsQuery.isPending && <p className="mt-3 text-sm text-slate-500">Loading conversations...</p>}
-        {conversationsQuery.isError && <p className="mt-3 text-sm text-red-600">Unable to load conversations.</p>}
-
-        <div className="mt-4 space-y-2">
-          {conversationsQuery.data?.map((conversation) => (
-            <button
-              key={conversation.id}
-              className={`w-full rounded border px-3 py-2 text-left text-sm ${
-                selectedConversationId === conversation.id
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-300 bg-white text-slate-900"
-              }`}
-              onClick={() => setSelectedConversationId(conversation.id)}
-            >
-              {conversation.id}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-4">
-        <h2 className="text-lg font-semibold text-slate-900">Thread</h2>
-        {!selectedConversationId && (
-          <p className="mt-4 text-sm text-slate-500">Select a conversation to view messages.</p>
-        )}
-
-        {selectedConversationId && (
-          <>
-            <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto rounded border border-slate-200 p-3">
-              {messagesQuery.isPending && <p className="text-sm text-slate-500">Loading messages...</p>}
-              {messagesQuery.isError && <p className="text-sm text-red-600">Unable to load messages.</p>}
-              {messagesQuery.data?.map((message) => (
-                <article key={message.id} className="rounded border border-slate-200 p-2">
-                  <p className="text-xs text-slate-500">{message.sender_id}</p>
-                  <p className="text-sm text-slate-900">{message.body}</p>
-                </article>
+      <Card className="flex h-[600px] overflow-hidden">
+        {/* Conversation List */}
+        <div className="w-72 border-r">
+          <div className="border-b px-4 py-3">
+            <h3 className="text-sm font-semibold">Conversations</h3>
+          </div>
+          <ScrollArea className="h-[calc(600px-49px)]">
+            {conversationsQuery.isPending && <p className="p-4 text-sm text-muted-foreground">Loading...</p>}
+            {conversationsQuery.isError && <p className="p-4 text-sm text-destructive">Unable to load conversations.</p>}
+            <div className="space-y-1 p-2">
+              {conversationsQuery.data?.map((conv) => (
+                <button
+                  key={conv.id}
+                  className={cn(
+                    "w-full rounded-md px-3 py-2 text-left text-sm transition-colors",
+                    selectedConversationId === conv.id
+                      ? "bg-accent text-accent-foreground"
+                      : "hover:bg-muted"
+                  )}
+                  onClick={() => setSelectedConversationId(conv.id)}
+                >
+                  <span className="truncate font-medium">{conv.id.slice(0, 8)}...</span>
+                </button>
               ))}
             </div>
+          </ScrollArea>
+        </div>
 
-            <div className="mt-3 flex gap-2">
-              <input
-                value={messageInput}
-                onChange={(event) => setMessageInput(event.target.value)}
-                placeholder="Type your message"
-                className="w-full rounded border px-3 py-2 text-sm"
+        {/* Message Thread */}
+        <div className="flex flex-1 flex-col">
+          {!selectedConversationId ? (
+            <div className="flex flex-1 items-center justify-center">
+              <EmptyState
+                icon={MessageSquare}
+                title="No conversation selected"
+                description="Select a conversation to view messages."
               />
-              <button
-                className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white"
-                onClick={async () => {
-                  if (selectedConversationId && messageInput.trim()) {
-                    await sendMessageMutation.mutateAsync({
-                      conversationId: selectedConversationId,
-                      body: messageInput.trim(),
-                    });
-                  }
-                }}
-              >
-                Send
-              </button>
             </div>
-          </>
-        )}
-      </section>
-    </main>
+          ) : (
+            <>
+              <div className="border-b px-4 py-3">
+                <h3 className="text-sm font-semibold">Thread</h3>
+                <p className="text-xs text-muted-foreground">{selectedConversationId}</p>
+              </div>
+
+              <ScrollArea className="flex-1 p-4">
+                {messagesQuery.isPending && <p className="text-sm text-muted-foreground">Loading messages...</p>}
+                {messagesQuery.isError && <p className="text-sm text-destructive">Unable to load messages.</p>}
+                <div className="space-y-3">
+                  {messagesQuery.data?.map((msg) => (
+                    <div key={msg.id} className="rounded-lg bg-muted p-3">
+                      <p className="text-xs text-muted-foreground">{msg.sender_id.slice(0, 8)}...</p>
+                      <p className="mt-1 text-sm">{msg.body}</p>
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+              </ScrollArea>
+
+              <Separator />
+              <div className="flex gap-2 p-4">
+                <Input
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  placeholder="Type your message..."
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter" && !e.shiftKey && messageInput.trim()) {
+                      e.preventDefault();
+                      await sendMessageMutation.mutateAsync({
+                        conversationId: selectedConversationId,
+                        body: messageInput.trim(),
+                      });
+                    }
+                  }}
+                />
+                <Button
+                  size="icon"
+                  onClick={async () => {
+                    if (selectedConversationId && messageInput.trim()) {
+                      await sendMessageMutation.mutateAsync({
+                        conversationId: selectedConversationId,
+                        body: messageInput.trim(),
+                      });
+                    }
+                  }}
+                  disabled={sendMessageMutation.isPending}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </Card>
+    </div>
   );
 }

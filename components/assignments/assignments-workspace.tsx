@@ -2,6 +2,40 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { ClipboardList, Plus } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TableSkeleton } from "@/components/ui/loading-skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/layout/page-header";
 
 type AssignmentRecord = {
   id: string;
@@ -19,22 +53,14 @@ type AssignmentResponse = {
 async function fetchMyAssignments(): Promise<AssignmentRecord[]> {
   const response = await fetch("/api/assignments/my");
   const payload = (await response.json()) as AssignmentResponse;
-
-  if (!response.ok) {
-    throw new Error(payload.error ?? "Failed to load assignments");
-  }
-
+  if (!response.ok) throw new Error(payload.error ?? "Failed to load assignments");
   return payload.data;
 }
 
 async function fetchFacilityAssignments(shiftId: string): Promise<AssignmentRecord[]> {
   const response = await fetch(`/api/assignments?scope=facility&shift_id=${shiftId}`);
   const payload = (await response.json()) as AssignmentResponse;
-
-  if (!response.ok) {
-    throw new Error(payload.error ?? "Failed to load facility assignments");
-  }
-
+  if (!response.ok) throw new Error(payload.error ?? "Failed to load facility assignments");
   return payload.data;
 }
 
@@ -45,16 +71,11 @@ async function createAssignment(payload: {
 }): Promise<void> {
   const response = await fetch("/api/assignments", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-
   const body = (await response.json()) as { error?: string };
-  if (!response.ok) {
-    throw new Error(body.error ?? "Failed to create assignment");
-  }
+  if (!response.ok) throw new Error(body.error ?? "Failed to create assignment");
 }
 
 async function updateAssignmentStatus(payload: {
@@ -63,16 +84,11 @@ async function updateAssignmentStatus(payload: {
 }): Promise<void> {
   const response = await fetch("/api/assignments", {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-
   const body = (await response.json()) as { error?: string };
-  if (!response.ok) {
-    throw new Error(body.error ?? "Failed to update assignment");
-  }
+  if (!response.ok) throw new Error(body.error ?? "Failed to update assignment");
 }
 
 export function AssignmentsWorkspace() {
@@ -80,6 +96,7 @@ export function AssignmentsWorkspace() {
   const [workerId, setWorkerId] = useState("");
   const [applicationId, setApplicationId] = useState("");
   const [facilityShiftId, setFacilityShiftId] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const myQuery = useQuery({
     queryKey: ["my-assignments"],
@@ -98,10 +115,9 @@ export function AssignmentsWorkspace() {
       setShiftId("");
       setWorkerId("");
       setApplicationId("");
+      setDialogOpen(false);
       await myQuery.refetch();
-      if (facilityShiftId) {
-        await facilityQuery.refetch();
-      }
+      if (facilityShiftId) await facilityQuery.refetch();
     },
   });
 
@@ -109,124 +125,167 @@ export function AssignmentsWorkspace() {
     mutationFn: updateAssignmentStatus,
     onSuccess: async () => {
       await myQuery.refetch();
-      if (facilityShiftId) {
-        await facilityQuery.refetch();
-      }
+      if (facilityShiftId) await facilityQuery.refetch();
     },
   });
 
   return (
-    <main className="mx-auto grid w-full max-w-6xl gap-6 px-6 py-8 lg:grid-cols-2">
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h1 className="text-xl font-semibold text-slate-900">Create Assignment</h1>
-        <div className="mt-4 grid gap-3">
-          <input
-            value={shiftId}
-            onChange={(event) => setShiftId(event.target.value)}
-            placeholder="Shift ID"
-            className="rounded border px-3 py-2 text-sm"
-          />
-          <input
-            value={workerId}
-            onChange={(event) => setWorkerId(event.target.value)}
-            placeholder="Worker ID"
-            className="rounded border px-3 py-2 text-sm"
-          />
-          <input
-            value={applicationId}
-            onChange={(event) => setApplicationId(event.target.value)}
-            placeholder="Application ID (optional)"
-            className="rounded border px-3 py-2 text-sm"
-          />
-          <button
-            className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white"
-            onClick={async () => {
-              if (!shiftId || !workerId) {
-                return;
-              }
-
-              await createMutation.mutateAsync({
-                shift_id: shiftId,
-                worker_id: workerId,
-                application_id: applicationId || undefined,
-              });
-            }}
-          >
-            Assign Worker
-          </button>
-        </div>
-        {createMutation.isError && <p className="mt-3 text-sm text-red-600">Unable to create assignment.</p>}
-        {createMutation.isSuccess && <p className="mt-3 text-sm text-green-700">Assignment created.</p>}
-
-        <h2 className="mt-6 text-lg font-semibold text-slate-900">My Assignments</h2>
-        {myQuery.isPending && <p className="mt-2 text-sm text-slate-500">Loading assignments...</p>}
-        {myQuery.isError && <p className="mt-2 text-sm text-red-600">Unable to load assignments.</p>}
-        <div className="mt-3 space-y-3">
-          {myQuery.data?.map((assignment) => (
-            <article key={assignment.id} className="rounded-lg border border-slate-200 p-3">
-              <p className="text-sm font-medium text-slate-900">Shift: {assignment.shift_id}</p>
-              <p className="text-sm text-slate-600">Status: {assignment.assignment_status}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-semibold text-slate-900">Manage Assignments</h2>
-        <input
-          value={facilityShiftId}
-          onChange={(event) => setFacilityShiftId(event.target.value)}
-          placeholder="Shift ID"
-          className="mt-4 w-full rounded border px-3 py-2 text-sm"
-        />
-
-        {facilityQuery.isPending && facilityShiftId && <p className="mt-3 text-sm text-slate-500">Loading shift assignments...</p>}
-        {facilityQuery.isError && <p className="mt-3 text-sm text-red-600">Unable to load shift assignments.</p>}
-
-        <div className="mt-3 space-y-3">
-          {facilityQuery.data?.map((assignment) => (
-            <article key={assignment.id} className="rounded-lg border border-slate-200 p-3">
-              <p className="text-sm font-medium text-slate-900">Worker: {assignment.worker_id}</p>
-              <p className="text-sm text-slate-600">Status: {assignment.assignment_status}</p>
-              <div className="mt-2 flex gap-2">
-                <button
-                  className="rounded border border-slate-300 px-2 py-1 text-xs"
+    <div className="space-y-6">
+      <PageHeader
+        title="Assignments"
+        description="Manage worker assignments"
+        actions={
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4" />
+                Create Assignment
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create Assignment</DialogTitle>
+                <DialogDescription>Assign a worker to a shift.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Shift ID</Label>
+                  <Input value={shiftId} onChange={(e) => setShiftId(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Worker ID</Label>
+                  <Input value={workerId} onChange={(e) => setWorkerId(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Application ID (optional)</Label>
+                  <Input value={applicationId} onChange={(e) => setApplicationId(e.target.value)} />
+                </div>
+                {createMutation.isError && <Alert variant="destructive"><AlertDescription>Unable to create assignment.</AlertDescription></Alert>}
+                <Button
+                  className="w-full"
                   onClick={async () => {
-                    await updateMutation.mutateAsync({
-                      assignment_id: assignment.id,
-                      assignment_status: "in_progress",
+                    if (!shiftId || !workerId) return;
+                    await createMutation.mutateAsync({
+                      shift_id: shiftId,
+                      worker_id: workerId,
+                      application_id: applicationId || undefined,
                     });
                   }}
+                  disabled={createMutation.isPending}
                 >
-                  Start
-                </button>
-                <button
-                  className="rounded border border-slate-300 px-2 py-1 text-xs"
-                  onClick={async () => {
-                    await updateMutation.mutateAsync({
-                      assignment_id: assignment.id,
-                      assignment_status: "completed",
-                    });
-                  }}
-                >
-                  Complete
-                </button>
-                <button
-                  className="rounded border border-slate-300 px-2 py-1 text-xs"
-                  onClick={async () => {
-                    await updateMutation.mutateAsync({
-                      assignment_id: assignment.id,
-                      assignment_status: "cancelled",
-                    });
-                  }}
-                >
-                  Cancel
-                </button>
+                  Assign Worker
+                </Button>
               </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
+            </DialogContent>
+          </Dialog>
+        }
+      />
+
+      <Tabs defaultValue="my-assignments">
+        <TabsList>
+          <TabsTrigger value="my-assignments">My Assignments</TabsTrigger>
+          <TabsTrigger value="manage">Manage Assignments</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="my-assignments">
+          <Card>
+            <CardContent className="pt-6">
+              {myQuery.isPending && <TableSkeleton />}
+              {myQuery.isError && <Alert variant="destructive"><AlertDescription>Unable to load assignments.</AlertDescription></Alert>}
+
+              {myQuery.data && myQuery.data.length === 0 && (
+                <EmptyState icon={ClipboardList} title="No assignments" description="You don't have any assignments yet." />
+              )}
+
+              {myQuery.data && myQuery.data.length > 0 && (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Shift</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {myQuery.data.map((a) => (
+                      <TableRow key={a.id}>
+                        <TableCell className="font-medium">{a.shift_id}</TableCell>
+                        <TableCell><StatusBadge status={a.assignment_status} /></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="manage" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Lookup by Shift</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Input
+                value={facilityShiftId}
+                onChange={(e) => setFacilityShiftId(e.target.value)}
+                placeholder="Enter Shift ID"
+                className="max-w-xs"
+              />
+            </CardContent>
+          </Card>
+
+          {facilityQuery.isPending && facilityShiftId && <TableSkeleton rows={3} />}
+          {facilityQuery.isError && <Alert variant="destructive"><AlertDescription>Unable to load shift assignments.</AlertDescription></Alert>}
+
+          {facilityQuery.data && facilityQuery.data.length > 0 && (
+            <Card>
+              <CardContent className="pt-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Worker</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {facilityQuery.data.map((a) => (
+                      <TableRow key={a.id}>
+                        <TableCell className="font-medium">{a.worker_id}</TableCell>
+                        <TableCell><StatusBadge status={a.assignment_status} /></TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">Update</Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem onClick={async () => {
+                                await updateMutation.mutateAsync({ assignment_id: a.id, assignment_status: "in_progress" });
+                              }}>
+                                Start
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={async () => {
+                                await updateMutation.mutateAsync({ assignment_id: a.id, assignment_status: "completed" });
+                              }}>
+                                Complete
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={async () => {
+                                await updateMutation.mutateAsync({ assignment_id: a.id, assignment_status: "cancelled" });
+                              }}>
+                                Cancel
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

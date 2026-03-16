@@ -4,8 +4,36 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Plus, Search, AlertTriangle } from "lucide-react";
 
 import { ShiftCreateSchema, type ShiftCreateInput } from "@/lib/validations/shifts";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TableSkeleton } from "@/components/ui/loading-skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/layout/page-header";
 
 type ShiftRecord = ShiftCreateInput & {
   id: string;
@@ -56,9 +84,7 @@ async function fetchShifts(filters: { specialty: string; urgent: boolean }): Pro
 async function createShift(values: ShiftCreateInput): Promise<void> {
   const response = await fetch("/api/shifts", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(values),
   });
 
@@ -71,6 +97,7 @@ async function createShift(values: ShiftCreateInput): Promise<void> {
 export function ShiftsWorkspace() {
   const [specialtyFilter, setSpecialtyFilter] = useState("");
   const [urgentOnly, setUrgentOnly] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const form = useForm<ShiftCreateInput>({
     resolver: zodResolver(ShiftCreateSchema),
@@ -86,97 +113,171 @@ export function ShiftsWorkspace() {
     mutationFn: createShift,
     onSuccess: async () => {
       form.reset(shiftDefaults);
+      setDialogOpen(false);
       await query.refetch();
     },
   });
 
   return (
-    <main className="mx-auto grid w-full max-w-6xl gap-6 px-6 py-8 lg:grid-cols-2">
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h1 className="text-xl font-semibold text-slate-900">Post Shift</h1>
-        <form
-          className="mt-4 grid gap-3"
-          onSubmit={form.handleSubmit(async (values) => {
-            await mutation.mutateAsync(values);
-          })}
-        >
-          <input placeholder="Facility ID" className="rounded border px-3 py-2 text-sm" {...form.register("facility_id")} />
-          <input placeholder="Title" className="rounded border px-3 py-2 text-sm" {...form.register("title")} />
-          <input placeholder="Department" className="rounded border px-3 py-2 text-sm" {...form.register("department")} />
-          <input placeholder="Specialty" className="rounded border px-3 py-2 text-sm" {...form.register("specialty_required")} />
-          <input type="date" className="rounded border px-3 py-2 text-sm" {...form.register("shift_date")} />
-          <div className="grid grid-cols-2 gap-3">
-            <input type="time" className="rounded border px-3 py-2 text-sm" {...form.register("start_time")} />
-            <input type="time" className="rounded border px-3 py-2 text-sm" {...form.register("end_time")} />
+    <div className="space-y-6">
+      <PageHeader
+        title="Shifts"
+        description="Browse and manage marketplace shifts"
+        actions={
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4" />
+                Post Shift
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Post a New Shift</DialogTitle>
+                <DialogDescription>Fill in the details for your shift posting.</DialogDescription>
+              </DialogHeader>
+              <form
+                className="space-y-4"
+                onSubmit={form.handleSubmit(async (values) => {
+                  await mutation.mutateAsync(values);
+                })}
+              >
+                <div className="space-y-2">
+                  <Label>Facility ID</Label>
+                  <Input {...form.register("facility_id")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Title</Label>
+                  <Input {...form.register("title")} />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Department</Label>
+                    <Input {...form.register("department")} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Specialty</Label>
+                    <Input {...form.register("specialty_required")} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <Input type="date" {...form.register("shift_date")} />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Start Time</Label>
+                    <Input type="time" {...form.register("start_time")} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>End Time</Label>
+                    <Input type="time" {...form.register("end_time")} />
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Hourly Rate ($)</Label>
+                    <Input type="number" step="0.01" {...form.register("hourly_rate", { valueAsNumber: true })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Workers Needed</Label>
+                    <Input type="number" {...form.register("workers_needed", { valueAsNumber: true })} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Location</Label>
+                  <Input {...form.register("location")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Textarea {...form.register("description")} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="urgent"
+                    checked={form.watch("urgent_flag")}
+                    onCheckedChange={(checked) => form.setValue("urgent_flag", checked === true)}
+                  />
+                  <Label htmlFor="urgent" className="cursor-pointer">Mark as urgent</Label>
+                </div>
+
+                {mutation.isError && <Alert variant="destructive"><AlertDescription>Unable to create shift.</AlertDescription></Alert>}
+
+                <Button type="submit" className="w-full" disabled={mutation.isPending}>
+                  {mutation.isPending ? "Posting..." : "Post Shift"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        }
+      />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Browse Shifts</CardTitle>
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={specialtyFilter}
+                onChange={(e) => setSpecialtyFilter(e.target.value)}
+                placeholder="Filter by specialty"
+                className="pl-9"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="urgentFilter"
+                checked={urgentOnly}
+                onCheckedChange={(checked) => setUrgentOnly(checked === true)}
+              />
+              <Label htmlFor="urgentFilter" className="cursor-pointer text-sm">Urgent only</Label>
+            </div>
           </div>
-          <input
-            type="number"
-            step="0.01"
-            className="rounded border px-3 py-2 text-sm"
-            {...form.register("hourly_rate", { valueAsNumber: true })}
-          />
-          <input
-            type="number"
-            className="rounded border px-3 py-2 text-sm"
-            {...form.register("workers_needed", { valueAsNumber: true })}
-          />
-          <input placeholder="Location" className="rounded border px-3 py-2 text-sm" {...form.register("location")} />
-          <textarea placeholder="Description" className="rounded border px-3 py-2 text-sm" {...form.register("description")} />
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input type="checkbox" {...form.register("urgent_flag")} />
-            Mark as urgent
-          </label>
+        </CardHeader>
+        <CardContent>
+          {query.isPending && <TableSkeleton />}
+          {query.isError && <Alert variant="destructive"><AlertDescription>Unable to load shifts.</AlertDescription></Alert>}
 
-          {mutation.isError && <p className="text-sm text-red-600">Unable to create shift.</p>}
-          {mutation.isSuccess && <p className="text-sm text-green-700">Shift created.</p>}
-
-          <button
-            type="submit"
-            className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white"
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? "Posting..." : "Post Shift"}
-          </button>
-        </form>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-semibold text-slate-900">Browse Shifts</h2>
-        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
-          <input
-            value={specialtyFilter}
-            onChange={(event) => setSpecialtyFilter(event.target.value)}
-            placeholder="Filter by specialty"
-            className="rounded border px-3 py-2 text-sm"
-          />
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={urgentOnly}
-              onChange={(event) => setUrgentOnly(event.target.checked)}
-            />
-            Urgent only
-          </label>
-        </div>
-
-        {query.isPending && <p className="mt-4 text-sm text-slate-500">Loading shifts...</p>}
-        {query.isError && <p className="mt-4 text-sm text-red-600">Unable to load shifts.</p>}
-
-        <div className="mt-4 space-y-3">
-          {query.data?.map((shift) => (
-            <article key={shift.id} className="rounded-lg border border-slate-200 p-4">
-              <h3 className="text-base font-semibold text-slate-900">{shift.title}</h3>
-              <p className="text-sm text-slate-600">
-                {shift.shift_date} {shift.start_time} - {shift.end_time}
-              </p>
-              <p className="text-sm text-slate-700">${shift.hourly_rate}/hr</p>
-            </article>
-          ))}
           {query.data && query.data.length === 0 && (
-            <p className="text-sm text-slate-500">No shifts found for the selected filters.</p>
+            <EmptyState
+              icon={Search}
+              title="No shifts found"
+              description="No shifts match the selected filters."
+            />
           )}
-        </div>
-      </section>
-    </main>
+
+          {query.data && query.data.length > 0 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Time</TableHead>
+                  <TableHead>Rate</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {query.data.map((shift) => (
+                  <TableRow key={shift.id}>
+                    <TableCell className="font-medium">
+                      {shift.title}
+                      {shift.urgent_flag && (
+                        <AlertTriangle className="ml-1 inline h-3 w-3 text-red-500" />
+                      )}
+                    </TableCell>
+                    <TableCell>{shift.shift_date}</TableCell>
+                    <TableCell>{shift.start_time} - {shift.end_time}</TableCell>
+                    <TableCell>${shift.hourly_rate}/hr</TableCell>
+                    <TableCell><StatusBadge status={shift.status ?? "open"} /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

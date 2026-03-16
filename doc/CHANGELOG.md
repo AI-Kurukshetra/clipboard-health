@@ -64,3 +64,4 @@
 - feat(ui): added shared authenticated dashboard header with reusable `Logout` button available across protected pages.
 - test(e2e): updated auth flow spec to validate real logout interaction and post-logout protected route redirect.
 - chore(deploy): deployed logout update to Vercel production (`https://clipboard-health.vercel.app`) and verified live login->logout->redirect flow.
+- docs(demo): added VIDEO_DEMO_SCRIPT.md with complete recording flow, seeded users/IDs, exact form values, edge-case script, and narration prompts for end-to-end MVP walkthrough.

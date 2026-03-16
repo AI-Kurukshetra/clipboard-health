@@ -375,3 +375,11 @@ Legend: `[ ]` todo, `[~]` in-progress, `[x]` done, `[!]` blocked
 - Files affected: `doc/PROGRESS.md`, `doc/CHANGELOG.md`, `doc/DECISIONS.md`
 - Agent responsible: coordinator
 - Dependencies: T18.2
+
+## Phase 19 - Demo Video Enablement
+
+### [x] T19.1 Create detailed video recording script using seeded demo users and IDs (2026-03-14 18:31)
+- Description: Add a complete recording script covering all MVP flows (worker, facility, logout, edge cases, Supabase table proof) with exact accounts, field values, route steps, and talk track.
+- Files affected: `VIDEO_DEMO_SCRIPT.md`, `doc/TASKS.md`, `doc/PROGRESS.md`, `doc/CHANGELOG.md`, `doc/DECISIONS.md`
+- Agent responsible: coordinator
+- Dependencies: T18.3

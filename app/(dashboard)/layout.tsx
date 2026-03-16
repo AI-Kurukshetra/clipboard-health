@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { LogoutButton } from "@/components/auth/logout-button";
 import { createClient } from "@/lib/supabase/server";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { MobileSidebar } from "@/components/layout/mobile-sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -21,18 +23,22 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const role = (user.user_metadata?.role as string) ?? "healthcare_worker";
+  const email = user.email ?? "user";
+
   return (
-    <div className="min-h-screen bg-slate-100">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-3">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Healthcare Workforce Marketplace</p>
-            <p className="text-xs text-slate-500">Signed in as {user.email ?? "user"}</p>
-          </div>
-          <LogoutButton />
-        </div>
-      </header>
-      <main>{children}</main>
-    </div>
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r lg:block">
+          <AppSidebar email={email} role={role} />
+        </aside>
+
+        <MobileSidebar email={email} role={role} />
+
+        <main className="lg:pl-64">
+          <div className="mx-auto max-w-6xl px-6 py-8">{children}</div>
+        </main>
+      </div>
+    </TooltipProvider>
   );
 }

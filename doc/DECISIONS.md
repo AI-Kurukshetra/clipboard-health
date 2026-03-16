@@ -29,3 +29,4 @@
 - Deployment verification standard now includes one live signup and one live login-to-protected-page smoke against production URL.
 - Logout is a first-class authenticated action in the shared dashboard layout, not page-specific, to keep sign-out discoverable across all protected routes.
 - Logout verification standard now requires real UI interaction in E2E (button click) rather than cookie-clearing shortcuts.
+- Demo handoff now includes a dedicated recording artifact (VIDEO_DEMO_SCRIPT.md) as the canonical presenter guide for full-feature walkthroughs using seeded data.

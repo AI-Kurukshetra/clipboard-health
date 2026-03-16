@@ -427,3 +427,12 @@
     + doc/DECISIONS.md
   Checks passed: corepack pnpm lint PASS  corepack pnpm typecheck PASS  corepack pnpm test PASS  corepack pnpm exec playwright test tests/e2e/auth-flow.spec.ts tests/e2e/protected-routes.spec.ts PASS  corepack pnpm dlx vercel deploy --prod --yes PASS  live login->logout smoke PASS
   Next handoff to: human - optional full-suite E2E rerun if you want exhaustive post-deploy confidence
+[2026-03-14 18:31] coordinator - Added detailed end-to-end video recording script with seeded identities and scene-by-scene narration
+  Output files:
+    + VIDEO_DEMO_SCRIPT.md
+    + doc/TASKS.md
+    + doc/PROGRESS.md
+    + doc/CHANGELOG.md
+    + doc/DECISIONS.md
+  Checks note: no code/runtime changes; test rerun not required for documentation-only update
+  Next handoff to: human - use script directly for recording and optionally request shortened 5-minute version
