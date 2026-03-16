@@ -59,7 +59,7 @@ async function clockAction(payload: { assignment_id: string; action: "clock_in" 
   if (!response.ok) throw new Error(body.error ?? "Clock action failed");
 }
 
-export function TimesheetsWorkspace() {
+export function TimesheetsWorkspace({ role = "healthcare_worker" }: { role?: string }) {
   const [assignmentId, setAssignmentId] = useState("");
   const [facilityAssignmentId, setFacilityAssignmentId] = useState("");
 
@@ -86,7 +86,7 @@ export function TimesheetsWorkspace() {
     <div className="space-y-6">
       <PageHeader title="Time Tracking" description="Clock in/out and view worked hours" />
 
-      <Card>
+      {role !== "facility_admin" && <Card>
         <CardHeader>
           <CardTitle className="text-base">Clock In / Out</CardTitle>
         </CardHeader>
@@ -129,12 +129,16 @@ export function TimesheetsWorkspace() {
           {actionMutation.isError && <Alert variant="destructive"><AlertDescription>Clock action failed.</AlertDescription></Alert>}
           {actionMutation.isSuccess && <Alert><AlertDescription>Timesheet updated.</AlertDescription></Alert>}
         </CardContent>
-      </Card>
+      </Card>}
 
-      <Tabs defaultValue="my-timesheets">
+      <Tabs defaultValue={role === "facility_admin" ? "facility" : "my-timesheets"}>
         <TabsList>
-          <TabsTrigger value="my-timesheets">My Timesheets</TabsTrigger>
-          <TabsTrigger value="facility">Facility View</TabsTrigger>
+          {(role === "healthcare_worker" || role === "admin") && (
+            <TabsTrigger value="my-timesheets">My Timesheets</TabsTrigger>
+          )}
+          {(role === "facility_admin" || role === "admin") && (
+            <TabsTrigger value="facility">Facility View</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="my-timesheets">

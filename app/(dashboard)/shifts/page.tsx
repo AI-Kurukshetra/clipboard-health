@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { createClient } from "@/lib/supabase/server";
 import { ShiftsWorkspace } from "@/components/shifts/shifts-workspace";
 
 export const metadata: Metadata = {
@@ -7,6 +8,10 @@ export const metadata: Metadata = {
   description: "Post and browse marketplace shifts",
 };
 
-export default function ShiftsPage() {
-  return <ShiftsWorkspace />;
+export default async function ShiftsPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const role = (user?.user_metadata?.role as string) ?? "healthcare_worker";
+
+  return <ShiftsWorkspace role={role} />;
 }

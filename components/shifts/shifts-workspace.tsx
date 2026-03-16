@@ -94,7 +94,7 @@ async function createShift(values: ShiftCreateInput): Promise<void> {
   }
 }
 
-export function ShiftsWorkspace() {
+export function ShiftsWorkspace({ role = "healthcare_worker" }: { role?: string }) {
   const [specialtyFilter, setSpecialtyFilter] = useState("");
   const [urgentOnly, setUrgentOnly] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -123,7 +123,7 @@ export function ShiftsWorkspace() {
       <PageHeader
         title="Shifts"
         description="Browse and manage marketplace shifts"
-        actions={
+        actions={role === "facility_admin" ? (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
@@ -209,7 +209,7 @@ export function ShiftsWorkspace() {
               </form>
             </DialogContent>
           </Dialog>
-        }
+        ) : undefined}
       />
 
       <Card>
