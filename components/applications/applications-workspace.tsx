@@ -69,7 +69,7 @@ async function updateStatus(applicationId: string, status: ApplicationRecord["ap
   if (!response.ok) throw new Error(payload.error ?? "Failed to update application");
 }
 
-export function ApplicationsWorkspace() {
+export function ApplicationsWorkspace({ role = "healthcare_worker" }: { role?: string }) {
   const [shiftId, setShiftId] = useState("");
   const [facilityShiftId, setFacilityShiftId] = useState("");
 
@@ -105,10 +105,14 @@ export function ApplicationsWorkspace() {
     <div className="space-y-6">
       <PageHeader title="Applications" description="Apply to shifts and review applicants" />
 
-      <Tabs defaultValue="my-applications">
+      <Tabs defaultValue={role === "facility_admin" ? "review" : "my-applications"}>
         <TabsList>
-          <TabsTrigger value="my-applications">My Applications</TabsTrigger>
-          <TabsTrigger value="review">Review Applicants</TabsTrigger>
+          {(role === "healthcare_worker" || role === "admin") && (
+            <TabsTrigger value="my-applications">My Applications</TabsTrigger>
+          )}
+          {(role === "facility_admin" || role === "admin") && (
+            <TabsTrigger value="review">Review Applicants</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="my-applications" className="space-y-4">

@@ -91,7 +91,7 @@ async function updateAssignmentStatus(payload: {
   if (!response.ok) throw new Error(body.error ?? "Failed to update assignment");
 }
 
-export function AssignmentsWorkspace() {
+export function AssignmentsWorkspace({ role = "healthcare_worker" }: { role?: string }) {
   const [shiftId, setShiftId] = useState("");
   const [workerId, setWorkerId] = useState("");
   const [applicationId, setApplicationId] = useState("");
@@ -134,7 +134,7 @@ export function AssignmentsWorkspace() {
       <PageHeader
         title="Assignments"
         description="Manage worker assignments"
-        actions={
+        actions={(role === "facility_admin" || role === "admin") ? (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
@@ -178,13 +178,17 @@ export function AssignmentsWorkspace() {
               </div>
             </DialogContent>
           </Dialog>
-        }
+        ) : undefined}
       />
 
-      <Tabs defaultValue="my-assignments">
+      <Tabs defaultValue={role === "facility_admin" ? "manage" : "my-assignments"}>
         <TabsList>
-          <TabsTrigger value="my-assignments">My Assignments</TabsTrigger>
-          <TabsTrigger value="manage">Manage Assignments</TabsTrigger>
+          {(role === "healthcare_worker" || role === "admin") && (
+            <TabsTrigger value="my-assignments">My Assignments</TabsTrigger>
+          )}
+          {(role === "facility_admin" || role === "admin") && (
+            <TabsTrigger value="manage">Manage Assignments</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="my-assignments">

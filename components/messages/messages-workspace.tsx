@@ -81,7 +81,14 @@ export function MessagesWorkspace() {
   const [participantIdsInput, setParticipantIdsInput] = useState("");
   const [messageInput, setMessageInput] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => {
+      setCurrentUserId(data.user?.id ?? null);
+    });
+  }, [supabase]);
 
   const conversationsQuery = useQuery({
     queryKey: ["conversations"],
@@ -231,12 +238,25 @@ export function MessagesWorkspace() {
                 {messagesQuery.isPending && <p className="text-sm text-muted-foreground">Loading messages...</p>}
                 {messagesQuery.isError && <p className="text-sm text-destructive">Unable to load messages.</p>}
                 <div className="space-y-3">
-                  {messagesQuery.data?.map((msg) => (
-                    <div key={msg.id} className="rounded-lg bg-muted p-3">
-                      <p className="text-xs text-muted-foreground">{msg.sender_id.slice(0, 8)}...</p>
-                      <p className="mt-1 text-sm">{msg.body}</p>
-                    </div>
-                  ))}
+                  {messagesQuery.data?.map((msg) => {
+                    const isOutgoing = currentUserId === msg.sender_id;
+                    return (
+                      <div
+                        key={msg.id}
+                        className={cn(
+                          "max-w-[75%] rounded-lg p-3",
+                          isOutgoing
+                            ? "ml-auto bg-primary text-primary-foreground"
+                            : "bg-muted"
+                        )}
+                      >
+                        {!isOutgoing && (
+                          <p className="text-xs text-muted-foreground">{msg.sender_id.slice(0, 8)}...</p>
+                        )}
+                        <p className={cn("text-sm", !isOutgoing && "mt-1")}>{msg.body}</p>
+                      </div>
+                    );
+                  })}
                   <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
